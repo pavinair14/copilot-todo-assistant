@@ -20,6 +20,7 @@ from django.urls import path, include
 # create a router for expenses
 from expenses import views
 from rest_framework.routers import DefaultRouter
+from expenses.views import home
 
 router = DefaultRouter()
 router.register(r'expenses', views.ExpenseViewSet, basename='expense')
@@ -28,6 +29,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),
+    path('', home, name='home'),
 ]
 
 
