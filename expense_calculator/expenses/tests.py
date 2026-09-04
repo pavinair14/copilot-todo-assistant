@@ -8,7 +8,7 @@ class ExpenseAPITestCase(APITestCase):
        # create 3 expenses
         Expense.objects.bulk_create([
             Expense(name='Food', amount=10.00, category='Food'),
-            Expense(name='Transportation', amount=20.00, category='Transportation'),
+            Expense(name='Transport', amount=20.00, category='Transport'),
             Expense(name='Entertainment', amount=30.00, category='Entertainment')
         ])
 

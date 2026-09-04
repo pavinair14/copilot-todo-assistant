@@ -5,109 +5,317 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Expense Tracker</title>
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
   <style>
+    :root {
+      --ink: #19324a;
+      --muted: #66788a;
+      --accent: #e8754f;
+      --accent-dark: #c85a38;
+      --surface: #ffffff;
+      --line: #d9e2e8;
+      --background: #eef4f2;
+    }
 
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef4f2 0%, #dcebea 100%);
+      color: var(--ink);
+    }
+
+    .container {
+      max-width: 960px;
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+
+    h1 {
+      margin-bottom: 0.4rem;
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    .intro {
+      margin-bottom: 2rem;
+      color: var(--muted);
+    }
+
+    .expense-form {
+      padding: 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 12px 32px rgba(25, 50, 74, 0.08);
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr) minmax(150px, 1.2fr) auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .expense-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0;
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .expense-form input,
+    .expense-form select {
+      box-sizing: border-box;
+      width: 100%;
+      margin: 0;
+      background: #fbfdfc;
+    }
+
+    .expense-form input[name="csrfmiddlewaretoken"] {
+      display: none;
+    }
+
+    .expense-form button {
+      margin-bottom: 0;
+      min-width: 130px;
+      white-space: nowrap;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .expense-form button:hover:not(:disabled),
+    .expense-form button:focus:not(:disabled) {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    .expense-form button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .expense-list {
+      margin-top: 2rem;
+      padding: 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 12px 32px rgba(25, 50, 74, 0.06);
+    }
+
+    .expense-list h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+    }
+
+    .empty-state {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    table {
+      margin-bottom: 0;
+    }
+
+    th,
+    td {
+      padding: 0.7rem 0.8rem;
+      vertical-align: middle;
+    }
+
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
+
+    .delete-button {
+      margin: 0;
+      width: auto;
+      min-width: 0;
+      height: 32px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.7rem;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #a33f35;
+      border-color: #e3aaa3;
+      background: #fff7f5;
+    }
+
+    .delete-button:hover,
+    .delete-button:focus {
+      color: #ffffff;
+      border-color: #b94e42;
+      background: #b94e42;
+    }
+
+    .message {
+      min-height: 1.5rem;
+      margin: 1rem 0 0;
+      color: var(--accent-dark);
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        padding-top: 1.5rem;
+      }
+
+      .expense-form {
+        grid-template-columns: 1fr;
+      }
+
+      .expense-form button {
+        width: 100%;
+      }
+
+      .expense-list {
+        padding: 0.75rem;
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 640px;
+      }
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <h1>Expense Tracker</h1>
-    <input type="text" id="name" placeholder="Name">
-    <input type="number" id="amount" placeholder="Amount">
-    <select id="category">
-      <option value="food">Food</option>
-      <option value="transport">Transport</option>
-      <option value="entertainment">Entertainment</option>
-      <option value="other">Other</option>
-    </select>
-    <input type="submit" value="Add Expense" onclick="postExpense()">
+    <p class="intro">Keep a clear view of where your money goes.</p>
+    <form id="expense-form" class="expense-form">
+      {% csrf_token %}
+      <label for="name">Name
+        <input type="text" id="name" name="name" placeholder="Expense name" required maxlength="100">
+      </label>
+      <label for="amount">Amount
+        <input type="number" id="amount" name="amount" placeholder="0.00" min="0" step="0.01" required>
+      </label>
+      <label for="category">Category
+        <select id="category" name="category" required>
+          <option value="" selected disabled>Choose one</option>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <button id="submit-button" type="submit" disabled>Add Expense</button>
+    </form>
+    <p id="message" class="message" role="status"></p>
+    <section class="expense-list" aria-labelledby="expense-list-heading">
+      <h2 id="expense-list-heading">Recent expenses</h2>
+      <p id="empty-state" class="empty-state">No records yet.</p>
+      <table id="expense-table" hidden>
+        <thead>
+          <tr><th>Name</th><th>Amount</th><th>Date</th><th>Category</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="expense-table-body"></tbody>
+      </table>
+    </section>
   </div>
   <script>
     const apiUri = '/api/expenses/';
-    const headers = {
-      'Content-Type': 'application/json'
-    };
-    function renderExpense(expense) {
-      console.table(expense);
-      const tr = document.createElement('tr');
-      const time = new Date(expense.date);
-      expense.date = time.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const tableBody = document.getElementById('expense-table-body');
+    const table = document.getElementById('expense-table');
+    const emptyState = document.getElementById('empty-state');
+    const form = document.getElementById('expense-form');
+    const submitButton = document.getElementById('submit-button');
+    const message = document.getElementById('message');
 
-      tr.innerHTML = `
-        <td>${expense.name}</td>
-        <td>${expense.amount}</td>
-        <td>${expense.date}</td>
-        <td>${expense.category}</td>
-      `;
+    function getCsrfToken() {
+      return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    async function request(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+          ...options.headers
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      return response.status === 204 ? null : response.json();
+    }
+
+    function renderExpense(expense) {
+      const tr = document.createElement('tr');
+      const date = new Date(expense.date).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+      [expense.name, expense.amount, date, expense.category].forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = value;
+        tr.appendChild(cell);
+      });
 
       const td = document.createElement('td');
       const button = document.createElement('button');
-        button.innerHTML = 'Delete';
-        button.addEventListener('click', () => {
-            deleteExpense(expense.id);
-        });
+      button.className = 'delete-button';
+      button.type = 'button';
+      button.textContent = 'Delete';
+      button.addEventListener('click', () => deleteExpense(expense.id));
       td.appendChild(button);
       tr.appendChild(td);
-      table.appendChild(tr);
-    }
-    function refreshTable() {
-        table.innerHTML = '';
-        getExpenses();
-    }
-    function getExpenses() {
-        fetch(apiUri, {
-            method: 'GET',
-            headers: headers
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            data.forEach(expense => {
-                renderExpense(expense);
-            });
-        })
-
+      tableBody.appendChild(tr);
     }
 
-    function postExpense() {
-        // name, amount, category(food,transport,entertainment,other etc.)
-        const expense = {
-            name: document.getElementById('name').value,
+    async function refreshTable() {
+      tableBody.replaceChildren();
+      const expenses = await request(apiUri);
+      const hasExpenses = expenses.length > 0;
+      table.hidden = !hasExpenses;
+      emptyState.hidden = hasExpenses;
+      expenses.forEach(renderExpense);
+    }
+
+    function validateForm() {
+      const name = document.getElementById('name').value.trim();
+      const amount = document.getElementById('amount').value;
+      const category = document.getElementById('category').value;
+      submitButton.disabled = !name || !amount || Number(amount) < 0 || !category;
+    }
+
+    async function postExpense(event) {
+      event.preventDefault();
+      message.textContent = '';
+      try {
+        await request(apiUri, {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('name').value.trim(),
             amount: document.getElementById('amount').value,
-            category: document.getElementById('category').value,
-            id: Date.now()
-        };
-        fetch(apiUri, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(expense)
-        })
-        .then(response => response.json())
-        .then(data => { 
-            console.log(data);
-            renderExpense(data);
-        })
+            category: document.getElementById('category').value
+          })
+        });
+        form.reset();
+        await refreshTable();
+      } catch (error) {
+        message.textContent = error.message;
+      }
     }
-    function deleteExpense(id) {
-        fetch(`${apiUri}${id}/`, {
-            method: 'DELETE',
-            headers: headers
-        })
-        .then(response => refreshTable())
-        .catch(error => console.error('Error:', error));
-        
-    }
-    
-    const table = document.createElement('table');
-    const container = document.querySelector('.container');
-    container.appendChild(table);
-    // document.body.appendChild(table);
-    // refreshTable();
-    // document.querySelector("input[type='submit']").addEventListener('click', postExpense);
 
+    async function deleteExpense(id) {
+      try {
+        await request(`${apiUri}${id}/`, { method: 'DELETE' });
+        await refreshTable();
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    }
+
+    form.addEventListener('input', validateForm);
+    form.addEventListener('change', validateForm);
+    form.addEventListener('submit', postExpense);
+    validateForm();
+    refreshTable().catch(error => { message.textContent = error.message; });
   </script>
 </body>
 
